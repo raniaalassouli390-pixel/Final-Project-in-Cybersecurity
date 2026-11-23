@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Insecure postMessage | Ghurir</title><link rel="stylesheet" href="css/style.css"></head>
+<body data-mode="vulnerable">
+<header><a href="index.html">Ghurir</a><nav><a href="tabnabbing.html">Tabnabbing</a><a href="csv-injection.html">CSV</a><a href="postmessage.html">postMessage</a></nav></header>
+<main>
+<h1>Insecure postMessage</h1>
+<h2>What it is</h2>
+<p>Pages and iframes talk to each other with <code>postMessage</code>, and the receiver must check who sent each message using <code>event.origin</code>. If it does not, any website can send commands that your page will obey. OWASP: A01 Broken Access Control. CWE-346 (Origin Validation Error).</p>
+
+<h2>The line</h2>
+<pre><span>// account.js: answers requests from the embedded widget</span><span>const token = "demo-token-1234";</span><span>window.addEventListener("message", (e) =&gt; {</span><span class="hl-bad">  // no check of e.origin: anyone can ask</span><span>  if (e.data.action === "getToken") {</span><span>    e.source.postMessage({ token }, "*");</span><span>  }</span><span>});</span></pre>
+
+<h2>Try it</h2>
+<div class="switch" role="group" aria-label="Code version"><button data-mode="vulnerable" aria-pressed="true">Vulnerable</button><button data-mode="fixed" aria-pressed="false">Fixed</button></div>
+<div class="demo">
+<div>
+<p>The payload button sends a simulated message to the page. The sender's origin is shown under the button.</p>
+<div class="payloads">
+<button data-payload="steal" class="card-btn"><strong>Payload: steal the session token</strong><small>from https://evil.example</small></button>
+<button data-payload="lookalike" class="card-btn"><strong>Payload: look-alike origin</strong><small>from https://bank.example.evil.com</small></button>
+</div>
+</div>
+<div>
+<div id="status" class="status"></div>
+<div id="out" class="log" aria-live="polite"></div>
+<p><a href="#" id="reset">Reset demo</a></p>
+</div>
+</div>
+
+<h2>Why it matters</h2>
+<p>A malicious site can open yours in a hidden iframe or pop-up and send it messages. If your page answers with something private, like a session token, the attacker can take over the account. Users see nothing, because the messages never appear in the address bar. A wrong check is almost as bad as none: a rule like "origin contains bank.example" also accepts <code>bank.example.evil.com</code>. Always compare against an exact allowlist, and never reply with target <code>"*"</code>.</p>
+
+<h2>The fix</h2>
+<pre><span>// account.js: answers requests from the embedded widget</span><span>const ALLOWED = ["https://bank.example"];</span><span>const token = "demo-token-1234";</span><span>window.addEventListener("message", (e) =&gt; {</span><span class="hl-good">  if (!ALLOWED.includes(e.origin)) return;</span><span>  if (e.data.action === "getToken") {</span><span>    e.source.postMessage({ token }, e.origin);</span><span>  }</span><span>});</span></pre>
+
+<h2>Sources</h2>
+<p><a href="https://owasp.org/www-project-web-security-testing-guide/stable/4-Web_Application_Security_Testing/11-Client-side_Testing/11-Testing_Web_Messaging">OWASP: Testing Web Messaging</a> · <a href="https://cwe.mitre.org/data/definitions/346.html">CWE-346</a></p>
+<!-- TODO team: add one real incident or HackerOne report to "Why it matters". -->
+</main>
+<footer>Simulation only. Nothing here touches a real site or real data. <a href="index.html">Back to all labs</a></footer>
+<script src="js/lab.js"></script>
+<script src="js/postmessage.js"></script>
+</body></html>

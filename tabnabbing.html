@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reverse Tabnabbing | Ghurir</title><link rel="stylesheet" href="css/style.css"></head>
+<body data-mode="vulnerable">
+<header><a href="index.html">Ghurir</a><nav><a href="tabnabbing.html">Tabnabbing</a><a href="csv-injection.html">CSV</a><a href="postmessage.html">postMessage</a></nav></header>
+<main>
+<h1>Reverse Tabnabbing</h1>
+<h2>What it is</h2>
+<p>When a page opens a link with <code>target="_blank"</code>, the new page can reach the old one through <code>window.opener</code> and change its address. An attacker uses this to swap your real tab for a fake login page while you read the new tab. OWASP: A01 Broken Access Control. CWE-1022.</p>
+
+<h2>The line</h2>
+<pre><span>&lt;ul class="comments"&gt;</span><span>  &lt;li&gt;</span><span>    &lt;b&gt;sara&lt;/b&gt; wrote a nice guide:</span><span>    &lt;a href="https://guide.example/tips"</span><span class="hl-bad">       target="_blank"&gt;Read it&lt;/a&gt;</span><span>  &lt;/li&gt;</span><span>&lt;/ul&gt;</span><span>&lt;!-- The opened page can then run: --&gt;</span><span>&lt;!-- window.opener.location = "https://fake-login.example" --&gt;</span></pre>
+
+<h2>Try it</h2>
+<div class="switch" role="group" aria-label="Code version"><button data-mode="vulnerable" aria-pressed="true">Vulnerable</button><button data-mode="fixed" aria-pressed="false">Fixed</button></div>
+<div class="payloads">
+<button data-payload="inspect">Inspect window.opener</button>
+<button data-payload="redirect">Redirect the original tab</button>
+</div>
+<div id="out" aria-live="polite"></div>
+
+<h2>Why it matters</h2>
+<p>You trust the first tab because it was already open and logged in. After the swap it looks like your site asks you to sign in again, so people type their password into the attacker's page. This is phishing that needs no hacking of your server. Modern browsers now treat <code>_blank</code> links as <code>noopener</code> by default, but old browsers, old code and <code>window.open</code> calls still need the fix.</p>
+
+<h2>The fix</h2>
+<pre><span>&lt;ul class="comments"&gt;</span><span>  &lt;li&gt;</span><span>    &lt;b&gt;sara&lt;/b&gt; wrote a nice guide:</span><span>    &lt;a href="https://guide.example/tips"</span><span>       target="_blank"</span><span class="hl-good">       rel="noopener noreferrer"&gt;Read it&lt;/a&gt;</span><span>  &lt;/li&gt;</span><span>&lt;/ul&gt;</span></pre>
+
+<h2>Sources</h2>
+<p><a href="https://owasp.org/www-community/attacks/Reverse_Tabnabbing">OWASP: Reverse Tabnabbing</a> · <a href="https://cwe.mitre.org/data/definitions/1022.html">CWE-1022</a></p>
+<!-- TODO team: add one real incident or HackerOne report to "Why it matters". -->
+</main>
+<footer>Simulation only. Nothing here touches a real site or real data. <a href="index.html">Back to all labs</a></footer>
+<script src="js/lab.js"></script>
+<script src="js/tabnabbing.js"></script>
+</body></html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CSV Injection | Ghurir</title><link rel="stylesheet" href="css/style.css"></head>
+<body data-mode="vulnerable">
+<header><a href="index.html">Ghurir</a><nav><a href="tabnabbing.html">Tabnabbing</a><a href="csv-injection.html">CSV</a><a href="postmessage.html">postMessage</a></nav></header>
+<main>
+<h1>CSV Injection</h1>
+<h2>What it is</h2>
+<p>A site exports user data to a CSV file, and a cell starting with <code>=</code>, <code>+</code>, <code>-</code> or <code>@</code> gets treated as a formula when someone opens it in a spreadsheet. The harm happens on the victim's computer, not on the server. OWASP: A03 Injection. CWE-1236.</p>
+
+<h2>The line</h2>
+<pre><span>// export.js: builds the CSV an admin downloads</span><span>function exportCsv(customers) {</span><span>  const rows = customers.map(c =&gt; {</span><span class="hl-bad">    const name = c.name;</span><span>    return `"${name.replace(/"/g, '""')}",${c.email}`;</span><span>  });</span><span>  return ["name,email", ...rows].join("\n");</span><span>}</span></pre>
+
+<h2>Try it</h2>
+<div class="switch" role="group" aria-label="Code version"><button data-mode="vulnerable" aria-pressed="true">Vulnerable</button><button data-mode="fixed" aria-pressed="false">Fixed</button></div>
+<div class="payloads">
+<button data-payload="link">=HYPERLINK(...)</button>
+<button data-payload="math">=1+1</button>
+</div>
+<div id="out" aria-live="polite"></div>
+<p><button id="dl" class="dl">Download report.csv (harmless test file)</button></p>
+
+<h2>Why it matters</h2>
+<p>An attacker signs up with a formula as their name. Later an admin exports the customer list and opens it. A formula can show a fake link, or in the worst cases pull data from other cells and send it out. The server is never hacked, so logs show nothing. Some vendors call this low risk because the victim must open the file, but admins open exports all the time.</p>
+
+<h2>The fix</h2>
+<pre><span>// export.js: builds the CSV an admin downloads</span><span>function exportCsv(customers) {</span><span>  const rows = customers.map(c =&gt; {</span><span class="hl-good">    const name = /^[=+\-@\t\r]/.test(c.name) ? "'" + c.name : c.name;</span><span>    return `"${name.replace(/"/g, '""')}",${c.email}`;</span><span>  });</span><span>  return ["name,email", ...rows].join("\n");</span><span>}</span></pre>
+
+<h2>Sources</h2>
+<p><a href="https://owasp.org/www-community/attacks/CSV_Injection">OWASP: CSV Injection</a> · <a href="https://cwe.mitre.org/data/definitions/1236.html">CWE-1236</a></p>
+<!-- TODO team: add one real incident or HackerOne report to "Why it matters". -->
+</main>
+<footer>Simulation only. Nothing here touches a real site or real data. <a href="index.html">Back to all labs</a></footer>
+<script src="js/lab.js"></script>
+<script src="js/csv-injection.js"></script>
+</body></html>
